@@ -1,0 +1,12 @@
+numpy==1.26.4
+scipy==1.17.1
+dlib==20.0.0
+opencv-contrib-python==4.13.0.92
+pillow==10.2.0
+imutils==0.5.4
+facenet-pytorch==2.6.0
+scikit-image==0.26.0
+scikit-learn==1.8.0
+matplotlib==3.10.8
+torch==2.2.2
+torchvision==0.17.2
