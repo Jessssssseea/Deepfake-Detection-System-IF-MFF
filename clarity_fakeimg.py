@@ -15,7 +15,7 @@ warnings.filterwarnings('ignore')
 # ====================== 配置参数 ======================
 DEFAULT_INPUT_DIR = r"D:\AI face\data_min\fake"
 DEFAULT_OUTPUT_DIR = r"D:\AI face\data_min\dedup_fake"
-DEFAULT_ERROR_DIR = r"D:\AI face\data_min\error_images_fake"  # 出错+无人脸都放这里
+DEFAULT_ERROR_DIR = r"D:\AI face\data_min\error_images_fake"
 DEFAULT_NUM_KEEP = 240000
 DLIB_PREDICTOR_PATH = "shape_predictor_68_face_landmarks.dat"
 SIMILARITY_THRESHOLD = 0.8  # 参数保留但不再使用
@@ -27,7 +27,7 @@ detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(DLIB_PREDICTOR_PATH)
 resnet = InceptionResnetV1(pretrained='vggface2').eval().to(DEVICE)
 
-error_image_paths = []  # 所有失败图片：读失败、无人脸、报错
+error_image_paths = []
 
 def compute_quality_and_embedding(image_path):
     try:
@@ -40,7 +40,6 @@ def compute_quality_and_embedding(image_path):
         faces = detector(gray, 1)
 
         if len(faces) == 0:
-            # 无人脸 → 也算出错
             error_image_paths.append(image_path)
             return None
 
@@ -125,7 +124,7 @@ def main():
     output_dir = args.output
     error_dir = args.error
     num_keep = args.num
-    # sim_thresh = args.threshold   # 不再使用
+    # sim_thresh = args.threshold
 
     if not os.path.exists(input_dir):
         print(f"输入文件夹不存在: {input_dir}")
@@ -158,7 +157,7 @@ def main():
 
     print(f"处理完成，有效图片数：{len(results)}，耗时：{time.time()-start_time:.1f}s")
 
-    # 修改部分：直接按质量分数排序并取前 num_keep 张，不再去重
+    # 直接按质量分数排序并取前 num_keep 张，不再去重
     kept_paths = []
     if len(results) > 0:
         results.sort(key=lambda x: x[0], reverse=True)  # 按分数降序
@@ -174,7 +173,6 @@ def main():
             if (i+1) % 500 == 0:
                 print(f"已移动 {i+1}/{len(kept_paths)}")
 
-    # 移动所有出错图片：读失败 + 无人脸 + 程序报错
     if error_image_paths:
         print(f"\n开始移动 {len(error_image_paths)} 张无效图片到错误文件夹...")
         for i, path in enumerate(error_image_paths):
