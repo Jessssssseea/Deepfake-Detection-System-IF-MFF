@@ -112,13 +112,19 @@ python Qmain.py
 
 ### 3. 判别规则
 $$
-label(x)=
-\begin{cases}
-Real, & S(x)≤τ \\
-Fake, & S(x)>τ
+label(x) = 
+\begin{cases} 
+\text{Real}, & S(x) \leq \tau \\
+\text{Fake}, & S(x) > \tau 
 \end{cases}
 $$
-其中，$S(x)$为异常得分，$τ$为检测阈值。
+
+其中，
+$$S(x)$$
+为异常得分，
+$$\tau$$
+为检测阈值。
+
 
 ## 实验结果
 在包含**362324张真实人脸**和**227674张伪造人脸**的测试集上的核心指标：
