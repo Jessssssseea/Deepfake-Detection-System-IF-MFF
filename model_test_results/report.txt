@@ -1,0 +1,29 @@
+========== AI Face Forgery Model Test Report ==========
+Model file: isolation_forest_model_202602221638.pkl
+Threshold: 0.028950
+
+Real images total: 362324, successful: 362324, failed: 0
+Fake images total: 227674, successful: 227674, failed: 0
+
+Classification Metrics:
+Accuracy:  0.7892
+Precision: 0.7015
+Recall (Fake accuracy):    0.6520
+Specificity (Real accuracy): 0.8650
+F1-score:  0.6758
+AUC: 0.8265
+AP:  0.7183
+
+Confusion Matrix:
+[[313416 48908]
+ [79251 148423]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+        Real       0.80      0.87      0.83    362324
+        Fake       0.75      0.65      0.70    227674
+
+    accuracy                           0.78    589998
+   macro avg       0.78      0.76      0.76    589998
+weighted avg       0.78      0.78      0.78    589998
