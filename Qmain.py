@@ -20,19 +20,14 @@ from PyQt5.QtGui import QPixmap, QImage
 DEFAULT_MODEL_PATH = "isolation_forest_model_202602232010.pkl"
 DEFAULT_SCALER_PATH = "scaler_202602232010.pkl"
 DEFAULT_THRESHOLD_PATH = "threshold_202602232010.txt"
-DLIB_PREDICTOR_PATH = "shape_predictor_68_face_landmarks.dat"   # 请确保此文件存在
+DLIB_PREDICTOR_PATH = "shape_predictor_68_face_landmarks.dat"
 # ==========================================================
 
 # 全局初始化 dlib 检测器
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(DLIB_PREDICTOR_PATH)
 
-# -------------------- 特征提取函数（可直接处理图像数组） --------------------
 def extract_features_from_image(img_bgr):
-    """
-    从 BGR 图像中提取特征向量
-    返回: 特征列表 (numpy array) 或 None（如果人脸检测失败）
-    """
     if img_bgr is None:
         return None
     gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
@@ -130,11 +125,9 @@ def extract_features_from_image(img_bgr):
     return features
 
 def extract_features(image_path):
-    """兼容原接口：从文件路径提取特征"""
     img = cv2.imread(image_path)
     return extract_features_from_image(img)
 
-# -------------------- 预测函数 --------------------
 def predict_image(image_bgr, model, scaler, threshold):
     """
     预测单张图像（BGR数组）
@@ -148,9 +141,7 @@ def predict_image(image_bgr, model, scaler, threshold):
     pred = 'Fake' if score > threshold else 'Real'
     return pred, score, "成功"
 
-# ====================== 工作线程 ======================
 class ImageDetectionThread(QThread):
-    """单张图片检测线程"""
     finished = pyqtSignal(object)
 
     def __init__(self, image_path, model, scaler, threshold):
@@ -169,7 +160,6 @@ class ImageDetectionThread(QThread):
         self.finished.emit((pred, score, msg))
 
 class VideoDetectionThread(QThread):
-    """视频检测线程（根据传入的帧索引列表读取）"""
     progress = pyqtSignal(int)      # 当前处理的帧序号（1开始）
     frame_result = pyqtSignal(int, str, float)  # 帧索引，预测，得分
     finished = pyqtSignal(list, dict)  # 全部结果列表，统计信息
@@ -177,7 +167,7 @@ class VideoDetectionThread(QThread):
     def __init__(self, video_path, frame_indices, model, scaler, threshold):
         super().__init__()
         self.video_path = video_path
-        self.frame_indices = frame_indices  # 要检测的帧索引列表
+        self.frame_indices = frame_indices
         self.model = model
         self.scaler = scaler
         self.threshold = threshold
@@ -203,12 +193,11 @@ class VideoDetectionThread(QThread):
                 score_display = score
             results.append((idx, pred_display, score_display))
             self.frame_result.emit(idx, pred_display, score_display)
-            self.progress.emit(i+1)   # 进度
+            self.progress.emit(i+1)
 
         cap.release()
         self.finished.emit(results, stats)
 
-# ====================== 主窗口 ======================
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -297,14 +286,13 @@ class MainWindow(QMainWindow):
         group_box = QGroupBox("抽帧设置")
         group_layout = QVBoxLayout()
 
-        # 智能抽帧 + 手动输入框
         smart_layout = QHBoxLayout()
         self.smart_checkbox = QCheckBox("智能抽帧")
         self.smart_checkbox.setChecked(True)
         self.spin_frames = QSpinBox()
         self.spin_frames.setRange(1, 100)
         self.spin_frames.setValue(10)
-        self.spin_frames.setEnabled(False)  # 初始智能模式，禁用
+        self.spin_frames.setEnabled(False)
         smart_layout.addWidget(self.smart_checkbox)
         smart_layout.addWidget(self.spin_frames)
         group_layout.addLayout(smart_layout)
@@ -344,34 +332,27 @@ class MainWindow(QMainWindow):
         self.video_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         layout.addWidget(self.video_table)
 
-        # 统计信息（包括视频整体结论）
         self.video_stats_label = QLabel("等待检测...")
         layout.addWidget(self.video_stats_label)
 
         self.video_tab.setLayout(layout)
 
-    # ---------- 辅助：控制控件启用状态 ----------
     def on_smart_toggled(self):
-        """智能抽帧复选框状态改变时，控制手动输入框的启用状态"""
         if self.smart_checkbox.isChecked():
             self.spin_frames.setEnabled(False)
         else:
-            # 只有在非抽取全部帧时才启用手动输入框
             self.spin_frames.setEnabled(not self.full_checkbox.isChecked())
         self.update_expected_frames()
 
     def on_full_toggled(self):
-        """抽取全部帧复选框状态改变时，控制手动输入框和智能复选框"""
         if self.full_checkbox.isChecked():
             self.smart_checkbox.setEnabled(False)
             self.spin_frames.setEnabled(False)
         else:
             self.smart_checkbox.setEnabled(True)
-            # 智能抽帧状态下，手动输入框禁用；否则启用
             self.spin_frames.setEnabled(not self.smart_checkbox.isChecked())
         self.update_expected_frames()
 
-    # ---------- 辅助：更新预计帧数显示 ----------
     def update_expected_frames(self):
         video_path = self.video_path_edit.text().strip()
         if not video_path or not os.path.exists(video_path):
@@ -388,7 +369,6 @@ class MainWindow(QMainWindow):
         if self.full_checkbox.isChecked():
             self.expected_label.setText(f"将抽取全部 {total_frames} 帧")
         elif self.smart_checkbox.isChecked():
-            # 智能抽帧策略：若总帧数≤30则全抽，否则抽30帧
             num = max(1, min(30, total_frames))
             self.expected_label.setText(f"将智能抽取 {num} 帧")
         else:
@@ -398,7 +378,6 @@ class MainWindow(QMainWindow):
             else:
                 self.expected_label.setText(f"将手动抽取 {manual_num} 帧")
 
-    # ---------- 模型加载 ----------
     def try_load_default_model(self):
         if os.path.exists(DEFAULT_MODEL_PATH) and os.path.exists(DEFAULT_SCALER_PATH) and os.path.exists(DEFAULT_THRESHOLD_PATH):
             try:
@@ -447,7 +426,6 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "错误", f"加载模型失败: {str(e)}")
 
-    # ---------- 图片检测 ----------
     def browse_image(self):
         path, _ = QFileDialog.getOpenFileName(self, "选择图片", "", "图片文件 (*.jpg *.jpeg *.png *.bmp)")
         if path:
@@ -483,7 +461,6 @@ class MainWindow(QMainWindow):
             self.img_result_text.append(f"异常得分: {score:.6f} (阈值: {self.threshold:.6f})")
         self.img_detect_btn.setEnabled(True)
 
-    # ---------- 视频检测 ----------
     def browse_video(self):
         path, _ = QFileDialog.getOpenFileName(self, "选择视频", "", "视频文件 (*.mp4 *.avi *.mov *.mkv)")
         if path:
@@ -573,14 +550,12 @@ class MainWindow(QMainWindow):
                       f"视频整体结论: {video_verdict}")
         self.video_stats_label.setText(stats_text)
 
-    # ---------- 辅助函数 ----------
     def check_model_loaded(self):
         if self.model is None or self.scaler is None or self.threshold is None:
             QMessageBox.warning(self, "警告", "请先加载模型！")
             return False
         return True
 
-# ====================== 程序入口 ======================
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MainWindow()
