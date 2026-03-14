@@ -21,7 +21,8 @@
 AI-FaceForgery-Detection-IsolationForest/
 ├── isolationforest_train.py  # 模型训练主代码（特征提取+孤立森林训练+阈值确定）
 ├── test_model.py             # 模型测试代码（指标计算+结果可视化+报告生成）
-├── clarity.py                # 数据预处理脚本（人脸筛选+质量评分+去重+对齐）
+├── clarity.py                # 真实图片数据预处理脚本（人脸筛选+质量评分+去重+对齐）
+├── clarity_fakeimg.py        # 虚假图片数据预处理脚本（人脸筛选+质量评分+对齐）
 ├── Qmain.py                  # 图形界面代码（图片/视频检测GUI）
 ├── shape_predictor_68_face_landmarks.dat  # dlib68关键点检测器（需自行下载）
 ├── README.md                 # 项目说明文档
@@ -31,7 +32,7 @@ AI-FaceForgery-Detection-IsolationForest/
 ## 环境配置
 ### 运行环境
 - Python 3.11.6
-- 处理器：Intel Core i7及以上（CPU即可运行，无需GPU）
+- 处理器：Intel(R) Core(TM) i7-14650HX 2.20GHz
 
 ### 依赖库安装
 直接通过`requirements.txt`安装：
@@ -54,7 +55,7 @@ pip install -r requirements.txt
 
 ### 预训练文件
 需自行下载dlib68关键点检测器：
-[shape_predictor_68_face_landmarks.dat](http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2)，解压后放入项目根目录。
+[shape_predictor_68_face_landmarks.dat](https://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2)，解压后放入项目根目录。
 
 ## 快速开始
 ### 1. 数据准备
