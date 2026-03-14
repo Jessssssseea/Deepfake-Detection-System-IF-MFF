@@ -1,18 +1,11 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-AI换脸模型测试软件（英文图表版）
-批量测试真实/伪造图片，输出性能指标并绘制图表
-
 python test_model.py --real_dir ./real --fake_dir ./fake \
                      --model isolation_forest_model.pkl \
                      --scaler scaler.pkl \
                      --threshold threshold.txt \
                      --predictor shape_predictor_68_face_landmarks.dat \
                      --output_dir ./results
-
-
-python test_model.py --real_dir ./data/dedup_real --fake_dir ./data/dedup_fake --model isolation_forest_model_202602221638.pkl --scaler scaler_202602221638.pkl --threshold threshold_202602221638.txt --predictor shape_predictor_68_face_landmarks.dat
 """
 
 import os
@@ -24,7 +17,7 @@ import cv2
 import dlib
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')  # 无图形界面时仍可保存图片
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.metrics import (
@@ -44,26 +37,19 @@ DEFAULT_PREDICTOR_PATH = "shape_predictor_68_face_landmarks.dat"
 
 # 初始化dlib
 detector = dlib.get_frontal_face_detector()
-predictor = None  # 将在主程序中加载
+predictor = None
 
-# -------------------- 特征提取函数（与训练时完全一致） --------------------
 def extract_features(image_path, predictor):
-    """
-    从单张图片提取特征向量
-    返回: 特征列表 (numpy array) 或 None（如果人脸检测失败）
-    """
     img = cv2.imread(image_path)
     if img is None:
         return None
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # 人脸检测
     faces = detector(gray, 1)
     if len(faces) == 0:
         return None
-    face = faces[0]  # 取最大人脸
+    face = faces[0]
 
-    # 获取关键点
     landmarks = predictor(gray, face)
     points = np.array([(p.x, p.y) for p in landmarks.parts()])
 
@@ -152,12 +138,7 @@ def extract_features(image_path, predictor):
     ])
     return features
 
-# -------------------- 批量处理函数 --------------------
 def process_directory(dir_path, label, model, scaler, threshold, predictor, ext_list=('*.jpg','*.jpeg','*.png')):
-    """
-    处理一个目录下的所有图片
-    返回: 特征列表, 得分列表, 预测标签列表, 真实标签列表, 成功图片路径列表, 失败计数
-    """
     features_list = []
     scores_list = []
     preds_list = []
@@ -165,7 +146,6 @@ def process_directory(dir_path, label, model, scaler, threshold, predictor, ext_
     img_paths_success = []
     fail_count = 0
 
-    # 收集所有图片
     image_paths = []
     for ext in ext_list:
         image_paths.extend(glob.glob(os.path.join(dir_path, ext)))
@@ -192,7 +172,6 @@ def process_directory(dir_path, label, model, scaler, threshold, predictor, ext_
 
     return features_list, scores_list, preds_list, true_labels, img_paths_success, fail_count
 
-# -------------------- 绘图函数（英文版） --------------------
 def save_roc_curve(y_true, y_score, save_path):
     fpr, tpr, _ = roc_curve(y_true, y_score)
     roc_auc = auc(fpr, tpr)
@@ -225,30 +204,24 @@ def save_pr_curve(y_true, y_score, save_path):
     return ap
 
 def save_confusion_matrix(y_true, y_pred, save_path, labels=['Real', 'Fake']):
-    """
-    绘制混淆矩阵，每个格子的面积与对应的样本数成正比
-    """
     cm = confusion_matrix(y_true, y_pred)
     tn, fp, fn, tp = cm.ravel()
     values = [[tn, fp], [fn, tp]]
     max_val = max(tn, fp, fn, tp)
     if max_val == 0:
-        return  # 无数据，不绘图
+        return
 
     fig, ax = plt.subplots(figsize=(6,5))
-    scale = 0.8  # 最大矩形尺寸占单元格的比例，避免重叠
+    scale = 0.8
 
-    # 绘制四个矩形，坐标：x轴为预测类别(0左,1右)，y轴为真实类别(0上,1下)
-    for i in range(2):          # 真实标签 i=0:Real, i=1:Fake
-        for j in range(2):      # 预测标签 j=0:Real, j=1:Fake
+    for i in range(2):
+        for j in range(2):
             val = values[i][j]
             if val == 0:
                 continue
-            # 矩形的宽度和高度与 val 的平方根成正比，使得面积与 val 成正比
             size = np.sqrt(val / max_val) * scale
             w = size
             h = size
-            # 中心点坐标：(j, 1-i) 使矩阵的左上角为TN
             center_x = j
             center_y = 1 - i
             rect = plt.Rectangle(
@@ -258,12 +231,10 @@ def save_confusion_matrix(y_true, y_pred, save_path, labels=['Real', 'Fake']):
                 linewidth=1
             )
             ax.add_patch(rect)
-            # 在矩形中心添加数字标签，根据背景色选择字体颜色
             text_color = 'white' if val/max_val > 0.5 else 'black'
             ax.text(center_x, center_y, str(val),
                     ha='center', va='center', fontsize=12, color=text_color)
 
-    # 设置坐标轴范围与标签
     ax.set_xlim(-0.5, 1.5)
     ax.set_ylim(-0.5, 1.5)
     ax.set_xticks([0, 1])
@@ -310,7 +281,6 @@ def save_pca_scatter(features, y_true, save_path):
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
 
-# -------------------- 主程序 --------------------
 def main():
     parser = argparse.ArgumentParser(description='AI Face Forgery Model Testing Tool')
     parser.add_argument('--real_dir', type=str, required=True, help='Directory containing real face images')
@@ -322,13 +292,11 @@ def main():
     parser.add_argument('--output_dir', type=str, default=None, help='Output directory for charts and report (default: model_name + " test results")')
     args = parser.parse_args()
 
-    # 确定输出目录名称：模型名称 + " test results"
     if args.output_dir is None:
         model_basename = os.path.splitext(os.path.basename(args.model))[0]
         args.output_dir = model_basename + " test results"
     os.makedirs(args.output_dir, exist_ok=True)
 
-    # 加载模型、标准化器、阈值
     print("Loading model...")
     if not os.path.exists(args.model):
         print(f"Error: Model file {args.model} does not exist")
@@ -365,13 +333,11 @@ def main():
         args.fake_dir, 1, model, scaler, threshold, predictor
     )
 
-    # 合并数据
     all_features = np.array(real_feat + fake_feat)
     all_scores = np.array(real_scores + fake_scores)
     all_preds = np.array(real_preds + fake_preds)
     all_true = np.array(real_true + fake_true)
 
-    # 统计
     total_real = len(real_paths) + real_fail
     total_fake = len(fake_paths) + fake_fail
     success_real = len(real_paths)
@@ -393,9 +359,7 @@ def main():
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
 
-    # 新增：真实人脸识别准确率（特异性）和伪造人脸识别准确率（召回率）
     specificity = tn / (tn + fp) if (tn + fp) > 0 else 0
-    # recall 即为伪造人脸识别准确率
 
     print(f"Accuracy:  {accuracy:.4f}")
     print(f"Precision: {precision:.4f}")
@@ -423,7 +387,7 @@ def main():
     # PR曲线
     if ap is not None:
         save_pr_curve(all_true, all_scores, os.path.join(args.output_dir, 'pr_curve.png'))
-    # 混淆矩阵（面积比例版）
+    # 混淆矩阵
     save_confusion_matrix(all_true, all_preds, os.path.join(args.output_dir, 'confusion_matrix.png'))
     # 得分分布
     save_score_distribution(all_true, all_scores, os.path.join(args.output_dir, 'score_distribution.png'))
@@ -431,7 +395,6 @@ def main():
     if len(all_features) > 1:
         save_pca_scatter(all_features, all_true, os.path.join(args.output_dir, 'pca_scatter.png'))
 
-    # 保存指标到文本文件
     report_path = os.path.join(args.output_dir, 'report.txt')
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write("========== AI Face Forgery Model Test Report ==========\n")
