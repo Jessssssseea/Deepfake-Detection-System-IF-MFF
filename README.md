@@ -163,12 +163,6 @@ $$\tau$$
 4. **个人用户**：通过GUI工具检测收到的人脸视频/图片，防范针对个人的换脸诈骗；
 5. **企业安防**：检测办公系统、监控中的人脸真伪，提升安防等级。
 
-## 参考资料
-1. Liu F T, Ting K M, Zhou Z H. Isolation-based anomaly detection[J]. ACM TKDD, 2012.
-2. 融合纹理特征的深度伪造图像检测系统 [J]. 科技理论与实践, 2025.
-3. Exposing GAN-Generated Faces Using Inconsistent Corneal Specular Highlights[C]. ICASSP, 2021.
-4. FaceNet: A Unified Embedding for Face Recognition and Clustering[C]. CVPR, 2015.
-
 ## 作者信息
 - 作者：王梓泰 何思凯 林宏伟
 - 单位：广东省揭阳第一中学 高二级
