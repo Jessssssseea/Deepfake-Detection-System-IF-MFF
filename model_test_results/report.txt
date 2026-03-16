@@ -6,8 +6,8 @@ Real images total: 362324, successful: 362324, failed: 0
 Fake images total: 227674, successful: 227674, failed: 0
 
 Classification Metrics:
-Accuracy:  0.7892
-Precision: 0.7015
+Accuracy:  0.7827
+Precision: 0.7521
 Recall (Fake accuracy):    0.6520
 Specificity (Real accuracy): 0.8650
 F1-score:  0.6758
